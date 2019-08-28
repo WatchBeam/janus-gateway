@@ -65,6 +65,7 @@ janus_plugin *create(void) {
  * - \c incoming_rtp(): a callback to notify you a peer has sent you a RTP packet;
  * - \c incoming_rtcp(): a callback to notify you a peer has sent you a RTCP message;
  * - \c incoming_data(): a callback to notify you a peer has sent you a message on a SCTP DataChannel;
+ * - \c failed_packet_send(): a callback to notify you that a packet failed to send.
  * - \c slow_link(): a callback to notify you a peer has sent a lot of NACKs recently, and the media path may be slow;
  * - \c hangup_media(): a callback to notify you the peer PeerConnection has been closed (e.g., after a DTLS alert);
  * - \c query_session(): this method is called by the core to get plugin-specific info on a session between you and a peer;
@@ -205,6 +206,7 @@ static janus_plugin janus_echotest_plugin =
 		.incoming_rtp = NULL,			\
 		.incoming_rtcp = NULL,			\
 		.incoming_data = NULL,			\
+		.failed_packet_send = NULL,     \
 		.slow_link = NULL,				\
 		.hangup_media = NULL,			\
 		.destroy_session = NULL,		\
@@ -305,8 +307,14 @@ struct janus_plugin {
 	 * @param[in] handle The plugin/gateway session used for this peer
 	 * @param[in] label The label of the data channel to use
 	 * @param[in] buf The message data (buffer)
-	 * @param[in] len The buffer lenght */
+	 * @param[in] len The buffer length */
 	void (* const incoming_data)(janus_plugin_session *handle, char *label, char *buf, int len);
+	/*! \brief Method to inform the plugin when a packet has failed to be sent to the client.
+	 * @param[in] handle The plugin/gateway session used for this peer
+	 * @param[in] video indicates if the packet was video or not.
+	 * @param[in] buf The message data (buffer)
+	 * @param[in] len The buffer length */
+	void (* const failed_packet_send)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Method to be notified by the core when too many NACKs have
 	 * been received or sent by Janus, and so a slow or potentially
 	 * unreliable network is to be expected for this peer

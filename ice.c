@@ -4123,12 +4123,24 @@ static gboolean janus_ice_outgoing_traffic_handle(janus_ice_handle *handle, janu
 					guint16 seq = ntohs(header->seq_number);
 					JANUS_LOG(LOG_DBG, "[%"SCNu64"] ... SRTP protect error... %s (len=%d-->%d, ts=%"SCNu32", seq=%"SCNu16")...\n",
 						handle->handle_id, janus_srtp_error_str(res), pkt->length, protected, timestamp, seq);
+					/* Inform the plugin of the failure if they have a callback setup */
+					janus_plugin *plugin = (janus_plugin *)handle->app;
+					if(plugin && plugin->failed_packet_send)
+					{
+						plugin->failed_packet_send(handle->app_handle, pkt->type == JANUS_ICE_PACKET_VIDEO, pkt->data, pkt->length);
+					}
 					janus_ice_free_rtp_packet(p);
 				} else {
 					/* Shoot! */
 					int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protected, pkt->data);
 					if(sent < protected) {
 						JANUS_LOG(LOG_ERR, "[%"SCNu64"] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protected);
+						/* Inform the plugin of the failure if they have a callback setup */
+						janus_plugin *plugin = (janus_plugin *)handle->app;
+						if(plugin && plugin->failed_packet_send)
+						{
+							plugin->failed_packet_send(handle->app_handle, pkt->type == JANUS_ICE_PACKET_VIDEO, pkt->data, pkt->length);
+						}
 					}
 					/* Update stats */
 					if(sent > 0) {
