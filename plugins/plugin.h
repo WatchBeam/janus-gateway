@@ -65,6 +65,7 @@ janus_plugin *create(void) {
  * - \c incoming_rtp(): a callback to notify you a peer has sent you a RTP packet;
  * - \c incoming_rtcp(): a callback to notify you a peer has sent you a RTCP message;
  * - \c incoming_data(): a callback to notify you a peer has sent you a message on a SCTP DataChannel;
+ * - \c sent_rtcp_packet(): a callback to notify you a rtcp packet has been sent to a client;
  * - \c slow_link(): a callback to notify you a peer has sent a lot of NACKs recently, and the media path may be slow;
  * - \c hangup_media(): a callback to notify you the peer PeerConnection has been closed (e.g., after a DTLS alert);
  * - \c query_session(): this method is called by the core to get plugin-specific info on a session between you and a peer;
@@ -205,6 +206,7 @@ static janus_plugin janus_echotest_plugin =
 		.incoming_rtp = NULL,			\
 		.incoming_rtcp = NULL,			\
 		.incoming_data = NULL,			\
+		.sent_rtcp_packet = NULL,		\
 		.slow_link = NULL,				\
 		.hangup_media = NULL,			\
 		.destroy_session = NULL,		\
@@ -307,6 +309,14 @@ struct janus_plugin {
 	 * @param[in] buf The message data (buffer)
 	 * @param[in] len The buffer lenght */
 	void (* const incoming_data)(janus_plugin_session *handle, char *label, char *buf, int len);
+	/*! \brief Method that gives plugins callbacks when rtcp messages are actually sent to the client.
+	 * Since the sending packets are queued to be sent, this is needed so plugins can accurately calculate 
+	 * the RTT between the server and the client.
+	 * @param[in] handle The plugin/gateway session used for this peer
+	 * @param[in] video indicates if the packet was a video packet or not.
+	 * @param[in] buf The message data (buffer)
+	 * @param[in] len The buffer length */
+	void (* const sent_rtcp_packet)(janus_plugin_session *handle, int video, char *buf, int len);
 	/*! \brief Method to be notified by the core when too many NACKs have
 	 * been received or sent by Janus, and so a slow or potentially
 	 * unreliable network is to be expected for this peer

@@ -4000,6 +4000,13 @@ static gboolean janus_ice_outgoing_traffic_handle(janus_ice_handle *handle, janu
 				int sent = nice_agent_send(handle->agent, stream->stream_id, component->component_id, protected, pkt->data);
 				if(sent < protected) {
 					JANUS_LOG(LOG_ERR, "[%"SCNu64"] ... only sent %d bytes? (was %d)\n", handle->handle_id, sent, protected);
+				} else {
+					/* Tell the plugin the packet has been sent if they have a callback setup. */
+					janus_plugin *plugin = (janus_plugin *)handle->app;
+					if(plugin && plugin->sent_rtcp_packet)
+					{
+						plugin->sent_rtcp_packet(handle->app_handle, pkt->type == JANUS_ICE_PACKET_VIDEO, pkt->data, pkt->length);
+					}
 				}
 			}
 		}
